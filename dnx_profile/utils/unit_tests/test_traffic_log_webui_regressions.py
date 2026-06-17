@@ -110,6 +110,12 @@ class TrafficLogWebUiRegressionTests(unittest.TestCase):
         self.assertIn('webui_table', script)
         self.assertNotIn('{ table:', script)
 
+    def test_system_log_ajax_renders_data_payload(self):
+        script = (REPO_ROOT / 'dnx_webui/templates/system/log/system/after_system.html').read_text()
+
+        self.assertIn('response.data', script)
+        self.assertNotIn('loadTableData(response)', script)
+
     def test_system_log_entries_include_current_log_file(self):
         system_log = load_module('source.system.log.dfe_system', 'dnx_webui/source/system/log/dfe_system.py')
         with tempfile.TemporaryDirectory() as tmp:
