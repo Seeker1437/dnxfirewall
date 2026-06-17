@@ -104,7 +104,7 @@
                   <td>{{ rule['-i'] }}</td>
                   {% set dst_port = rule.get('--dport') %}
                   {% set host_port = rule.get('--to-port') %}
-                  <td>{{ rule.get('-d', 'interface').rstrip('/32') }}{% if dst_port %}:{{ dst_port }}{% endif %}</td>
+                  <td>{{ rule.get('-d', 'interface').split('/')[0] }}{% if dst_port %}:{{ dst_port }}{% endif %}</td>
                   <td>{{ rule['--to-dest']}}{% if host_port %}:{{ host_port }}{% endif %}</td>
                 </tr>
               {% else %}

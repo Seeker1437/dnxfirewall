@@ -171,6 +171,12 @@ class NatAndWebUiRegressionTests(unittest.TestCase):
         self.assertNotIn("rule['--dport']", template)
         self.assertIn("rule.get('--dport'", template)
 
+    def test_nat_template_does_not_strip_destination_ip_octets(self):
+        template = (REPO_ROOT / 'dnx_webui/templates/rules/nat.html').read_text()
+
+        self.assertNotIn("rstrip('/32')", template)
+        self.assertIn("rule.get('-d', 'interface').split('/')[0]", template)
+
     def test_system_nat_parser_handles_icmp_dnat_without_dport(self):
         def_constants = types.ModuleType('dnx_gentools.def_constants')
         def_constants.module_import_callout = lambda filename: None
