@@ -108,10 +108,9 @@ class WebPage(StandardWebPage):
 
             set_wan_ip(wan_ip_settings)
 
-        elif (_IP_DISABLED):
-            return 98, 'wan interface configuration currently disabled for system rework.'
-
         elif ('wan_mac_update' in form):
+            if (_IP_DISABLED):
+                return 98, 'wan interface configuration currently disabled for system rework.'
 
             mac_addr = form.get('ud_wan_mac', DATA.MISSING)
             if (mac_addr is DATA.MISSING):
@@ -122,10 +121,16 @@ class WebPage(StandardWebPage):
             except ValidationError as ve:
                 return 6, ve.message
             else:
-                set_wan_mac(CFG.ADD, mac_address=mac_address)
+                set_wan_mac(CFG.ADD, mac_address=mac_addr)
 
-        elif ('wan_mac_restore' in form):
+        elif ('wan_mac_revert' in form):
+            if (_IP_DISABLED):
+                return 98, 'wan interface configuration currently disabled for system rework.'
+
             set_wan_mac(CFG.DEL)
+
+        elif (_IP_DISABLED):
+            return 98, 'wan interface configuration currently disabled for system rework.'
 
         else:
             return 99, INVALID_FORM

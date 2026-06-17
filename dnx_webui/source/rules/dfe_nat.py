@@ -67,18 +67,18 @@ def _dnat_rules(form: Form, action: str) -> str:
         if error := validate_dnat_rule(fields, action=CFG.ADD):
             return error.message + ' code=1'
 
-        if (fields.protocol in ['tcp', 'udp']):
-            try:
+        try:
+            ip_address(fields.host_ip)
+
+            if (fields.dst_ip != ''):
+                ip_address(fields.dst_ip)
+
+            if (fields.protocol in ['tcp', 'udp']):
                 network_port(fields.dst_port)
                 network_port(fields.host_port)
 
-                ip_address(fields.host_ip)
-
-                if (fields.dst_ip != ''):
-                    ip_address(fields.dst_ip)
-
-            except ValidationError as ve:
-                return ve.message + ' code=2'
+        except ValidationError as ve:
+            return ve.message + ' code=2'
 
         with IPTablesManager() as iptables:
             iptables.add_nat(fields)
@@ -145,17 +145,20 @@ def validate_dnat_rule(rule: config, /, action: CFG) -> Optional[ValidationError
 
     if (action is CFG.ADD):
         # ensuring all necessary fields are present in the namespace before continuing.
-        valid_fields = [
-            'src_zone', 'dst_ip', 'dst_port', 'host_ip', 'host_port', 'protocol'
-        ]
-
-        if not all([hasattr(rule, x) for x in valid_fields]):
+        base_fields = ['src_zone', 'dst_ip', 'host_ip', 'protocol']
+        if not all([hasattr(rule, x) for x in base_fields]):
             return ValidationError(INVALID_FORM)
 
         if (rule.protocol not in ['tcp', 'udp', 'icmp']):
             return ValidationError(INVALID_FORM)
 
-        if (not rule.dst_ip and (rule.src_zone != 'wan' and rule.dst_port in ['443', '80'])):
+        if (rule.protocol in ['tcp', 'udp']):
+            port_fields = ['dst_port', 'host_port']
+            if not all([hasattr(rule, x) and getattr(rule, x) for x in port_fields]):
+                return ValidationError(INVALID_FORM)
+
+        if (rule.protocol in ['tcp', 'udp'] and not rule.dst_ip
+                and (rule.src_zone != 'wan' and rule.dst_port in ['443', '80'])):
             return ValidationError('Interface dnat on ports 80,443 are only available on the wan interface.')
 
         if (rule.protocol == 'icmp'):
@@ -207,6 +210,20 @@ def validate_snat_rule(rule: config, /, action: CFG) -> Optional[ValidationError
         if not all([hasattr(rule, x) for x in valid_fields]):
             return ValidationError('Invalid form.')
 
+    elif (action is CFG.DEL):
+        valid_fields = ['nat_type', 'position']
+
+        if not all([hasattr(rule, x) for x in valid_fields]):
+            return ValidationError(INVALID_FORM)
+
+        output = run(
+            f'sudo iptables -t nat -nL {rule.nat_type} --line-number', shell=True, capture_output=True
+        ).stdout.splitlines()[1:]
+
+        rule_count = len(output)
+        if (rule.position not in range(1, rule_count + 1)):
+            return ValidationError('Selected rule is not valid and cannot be removed.')
+
 # ==============
 # CONFIGURATION
 # ==============
@@ -216,11 +233,13 @@ def configure_open_wan_protocol(nat: config, *, action: CFG) -> None:
 
         if (action is CFG.ADD):
 
+            if (nat.protocol == 'icmp'):
+                protocol_settings['open_protocols->icmp'] = True
+
             # if dst port is specified, protocol is tcp/udp
-            if (nat.dst_port):
+            elif (nat.dst_port):
                 protocol_settings[f'open_protocols->{nat.protocol}->{nat.dst_port}'] = nat.host_port
 
-            # will only match icmp, which is configured as a boolean value
             else:
                 protocol_settings[f'open_protocols->{nat.protocol}'] = True
 

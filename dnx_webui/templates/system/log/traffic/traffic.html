@@ -9,9 +9,9 @@
                     <form method="POST">
                         <div class="input-field col s5 m3 {{input_color}}">
                             <select name="table" id="table" onchange="this.form.submit()">
-                                {% for table_type in table_types %}
+                                {% for table_type in webui_tables %}
                                 <option value="{{table_type}}"
-                                        {% if table_type == table %} selected {% endif %}
+                                        {% if table_type == selected_webui_table %} selected {% endif %}
                                         {% if table_type.startswith('.') %} disabled {% endif %}>
                                     {{- table_type.upper() }}
                                 </option>

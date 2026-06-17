@@ -259,11 +259,16 @@ class FWObjectManager:
 
     def update(self, obj: config, /) -> None:
         try:
+            old_obj = self.user_database['objects'][obj.id]
             self.user_database['objects'][obj.id] = FW_OBJECT(*obj.values())
         except KeyError:
             pass  # log this error with LogHandler or return error
 
         else:
+            old_name = old_obj.name if hasattr(old_obj, 'name') else old_obj[1]
+            if (old_name != obj.name):
+                self.user_database['ntoid'].pop(old_name, None)
+
             self.user_database['ntoid'][obj.name] = obj.id
 
             self.db_changed = True

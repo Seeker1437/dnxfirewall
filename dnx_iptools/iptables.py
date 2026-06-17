@@ -154,18 +154,22 @@ class IPTablesManager:
         return self
 
     def __exit__(self, exc_type, exc_val, traceback) -> bool:
-        if (exc_type is None):
-            self.commit()
+        try:
+            if (exc_type is None):
+                self.commit()
 
-        release_lock(self._iptables_lock)
+            elif (exc_type):
+                self.error = ConfigurationError(f'IPTables manager failed while modifying the rules. error->{exc_val}')
 
-        if (exc_type):
-            self.error = ConfigurationError(f'IPTables manager failed while modifying the rules. error->{exc_val}')
+                if (not self._err_as_value):
+                    raise self.error
 
-            if (not self._err_as_value):
-                raise self.error
+                return True
 
-        return True
+        finally:
+            release_lock(self._iptables_lock)
+
+        return False
 
     # idea:: this should probably be a static method so it can be called after other static methods make changes.
     def commit(self) -> None:
@@ -241,7 +245,11 @@ class IPTablesManager:
     def delete_nat(self, rule: config) -> Optional[str]:
         shell(f'sudo iptables -t nat -D {rule.nat_type} {rule.position}', check=True)
 
-        return self._intf_to_zone.get(f'{rule.src_intf}', None)
+        src_intf = getattr(rule, 'src_intf', None)
+        if (src_intf is None):
+            return None
+
+        return self._intf_to_zone.get(f'{src_intf}', None)
 
     def remove_passive_block(self, host: int, profile_idx: int, timestamp: int) -> None:
         comment = f'-m comment --comment {profile_idx}-{timestamp}'

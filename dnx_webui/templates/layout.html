@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>dnxfirewall - Admin Panel</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <base href="/">
   <link href="{{url_for('static', filename='assets/css/style.css')}}" rel="stylesheet">
   <link href="{{url_for('static', filename='assets/fonts/fonts.css')}}" rel="stylesheet">
@@ -32,6 +33,18 @@
       {# initialized materialize defaults #}
       document.addEventListener('DOMContentLoaded', () => {
           M.AutoInit();
+
+          const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+          document.querySelectorAll('form').forEach((form) => {
+              const method = (form.getAttribute('method') || 'get').toLowerCase();
+              if (method !== 'post' || form.querySelector('input[name="csrf_token"]')) return;
+
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = 'csrf_token';
+              input.value = csrfToken;
+              form.prepend(input);
+          });
       })
   </script>
   {# dnx custom ajax client by seeker1437 (WyteChocolate) || ajax class will always be available #}

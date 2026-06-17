@@ -21,10 +21,12 @@ class AjaxClient {
 
         let response;
         let fullUrl = this.baseUrl + url
+        let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         let sendData = {
             method : 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
             },
             body: JSON.stringify(data)
         }

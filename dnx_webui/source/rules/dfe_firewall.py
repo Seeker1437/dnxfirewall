@@ -7,6 +7,7 @@ import string
 
 from typing import NamedTuple as _NamedTuple
 from collections import defaultdict
+from html import escape
 
 from source.web_typing import web_module_import_callout
 
@@ -60,11 +61,16 @@ _properties = {
 def format_fw_obj(fw_obj: list, /) -> list[str]:
 
     properties = _properties.get((fw_obj[3], fw_obj[4]), ['', ''])
+    obj_name = escape(str(fw_obj[1]), quote=True)
+    obj_group = escape(str(fw_obj[2]), quote=True)
+    obj_type = escape(str(fw_obj[3]), quote=True)
+    obj_value = escape(str(fw_obj[5]), quote=True)
+    obj_desc = escape(str(fw_obj[6]), quote=True)
 
     return [
         (f'<div class="chip tooltipped {properties[0]}" data-html="true" data-tooltip="<p style=width:160px>'
-            f'{fw_obj[2]}<br>{fw_obj[3]}<br>{fw_obj[5]}<br>{fw_obj[6]}</p>">'
-            f'<i class="material-icons tiny {properties[0]} valign-center">{properties[1]}</i> {fw_obj[1]}</div>'),
+            f'{obj_group}<br>{obj_type}<br>{obj_value}<br>{obj_desc}</p>">'
+            f'<i class="material-icons tiny {properties[0]} valign-center">{properties[1]}</i> {obj_name}</div>'),
         f'<i class="material-icons tiny valign-center">{properties[1]}</i>', properties[0]
     ]
 
@@ -197,6 +203,9 @@ class WebPage(RulesWebPage):
                     obj_manager.remove(fw_object)
             except ValidationError as ve:
                 return ve.message + '. code=8', section
+
+        elif ('revert_rules' in form):
+            cfirewall.revert()
 
         elif (section not in valid_sections or 'change_section' not in form):
             return INVALID_FORM + '. code=9', 'MAIN'

@@ -92,7 +92,7 @@ class WebPage(StandardWebPage):
 
         elif ('dns_over_tls' in form):
             protocol_settings = config(**{
-                'enabled': get_convert_bint(form, 'enabled')
+                'enabled': get_convert_bint(form, 'dns_over_tls')
             })
 
             if (protocol_settings.enabled is DATA.INVALID):
@@ -102,7 +102,7 @@ class WebPage(StandardWebPage):
 
         elif ('udp_fallback' in form):
             protocol_settings = config(**{
-                'fallback': get_convert_bint(form, 'fallback')
+                'fallback': get_convert_bint(form, 'udp_fallback')
             })
 
             if (protocol_settings.fallback is DATA.INVALID):
@@ -115,12 +115,12 @@ class WebPage(StandardWebPage):
 
         elif ('dns_cache_clear' in form):
             clear_dns_cache = config(**{
-                'top_domains': get_convert_bint(form, 'top_domains'),
-                'dns_cache': get_convert_bint(form, 'dns_cache')
+                'top_domains': 1 if 'top_domains' in form else 0,
+                'dns_cache': 1 if 'dns_cache' in form else 0
             })
 
-            # only one is required, so it will only be invalid if both are missing.
-            if all([x is DATA.MISSING for x in clear_dns_cache.values()]):
+            # only one is required, so it will only be invalid if neither checkbox was selected.
+            if not any(clear_dns_cache.values()):
                 return 10, INVALID_FORM
 
             set_dns_cache_clear_flag(clear_dns_cache)
@@ -191,10 +191,10 @@ def update_dns_record(dns_record: config):
         dns_records: ConfigChain = dnx.load_configuration(strict=False)
 
         if (dns_record.action is CFG.ADD):
-            dns_records[f'dns_server->records->{dns_record.name}'] = dns_record.ip
+            dns_records[f'records->{dns_record.name}'] = dns_record.ip
 
         elif (dns_record.action is CFG.DEL):
-            del dns_records[f'dns_server->records->{dns_record.name}']
+            del dns_records[f'records->{dns_record.name}']
 
         dnx.write_configuration(dns_records.expanded_user_data)
 
@@ -217,7 +217,7 @@ def set_dns_cache_clear_flag(clear_cache):
     with ConfigurationManager('dns_server', ext='cache') as dnx:
         dns_server_settings: ConfigChain = dnx.load_configuration(strict=False)
 
-        dns_server_settings['clear->standard'] = clear_cache.standard
+        dns_server_settings['clear->standard'] = clear_cache.dns_cache
         dns_server_settings['clear->top_domains'] = clear_cache.top_domains
 
         dnx.write_configuration(dns_server_settings.expanded_user_data)

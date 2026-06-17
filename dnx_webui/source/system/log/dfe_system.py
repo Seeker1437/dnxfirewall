@@ -61,7 +61,13 @@ class WebPage(LogWebPage):
         return True, WebAjaxContent(error=0, message='Log data retrieved.', data=get_log_entries(file_path))
 
 def get_log_entries(file_path: str) -> list[LOG_ENTRY]:
-    log_files = reversed(sorted(os.listdir(file_path))[:-1])
+    if (not os.path.isdir(file_path)):
+        return [('-', '-', '-', '-')]
+
+    log_files = [
+        file for file in reversed(sorted(os.listdir(file_path)))
+        if file.endswith('.log') and os.path.isfile(f'{file_path}/{file}')
+    ]
 
     temp_logs = []
     for file in log_files:
@@ -75,10 +81,15 @@ def get_log_entries(file_path: str) -> list[LOG_ENTRY]:
     for log_entry in temp_logs[:100]:
 
         # skipping over empty lines.
-        if not log_entry.strip('\n'): continue
+        if (not log_entry.strip() or log_entry.startswith('#')):
+            continue
 
-        epoch, *log_entry = log_entry.split('|', 3)
-        date_time = System.calculate_time_offset(int(epoch))
+        try:
+            epoch, *log_entry = log_entry.split('|', 3)
+            date_time = System.calculate_time_offset(int(epoch))
+        except (TypeError, ValueError):
+            continue
+
         date_time = System.format_log_time(date_time)
 
         combined_logs_append((date_time, *log_entry))

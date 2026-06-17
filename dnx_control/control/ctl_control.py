@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from json import loads
-from socket import socket, AF_UNIX, AF_INET, SOCK_DGRAM, SOCK_CLOEXEC, SOL_SOCKET, SO_PASSCRED, SCM_CREDENTIALS
+from socket import socket, AF_UNIX, SOCK_DGRAM, SOCK_CLOEXEC, SOL_SOCKET, SO_PASSCRED
 
 from dnx_gentools.def_exceptions import TerminateSignal
 from dnx_gentools.def_constants import TYPE_CHECKING, INITIALIZE_MODULE
@@ -24,7 +24,6 @@ if INITIALIZE_MODULE('syscontrol'):
     from dnx_gentools.def_constants import CONTROL_SOCKET, NO_DELAY, shell
     from dnx_gentools.standard_tools import looper
 
-    from dnx_iptools.def_structs import scm_creds_pack
     from dnx_iptools.protocol_tools import change_socket_owner, authenticate_sender
 
     from dnx_control.system.systemd import sysd_notify_ready
@@ -33,17 +32,16 @@ if INITIALIZE_MODULE('syscontrol'):
     # ====================
     # CONTROL MSG HANDLER
     # ====================
-    # if os.path.exists(CONTROL_SOCKET):
-    #     os.remove(CONTROL_SOCKET)
-    #
-    # _control_service = socket(AF_UNIX, SOCK_DGRAM)
-    _control_sock: Socket_T = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC)
-    # _control_sock.setsockopt(SOL_SOCKET, SO_PASSCRED, 1)
+    if os.path.exists(CONTROL_SOCKET):
+        os.remove(CONTROL_SOCKET)
+
+    _control_sock: Socket_T = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC)
+    _control_sock.setsockopt(SOL_SOCKET, SO_PASSCRED, 1)
     _control_sock.bind(CONTROL_SOCKET)
 
-    # change_socket_owner(CONTROL_SOCKET)
+    change_socket_owner(CONTROL_SOCKET)
 
-    _control_service_recv = _control_sock.recv
+    _control_service_recv = _control_sock.recvmsg
     _control_service_sendmsg = _control_sock.send
 
     MODULE_PERMISSIONS = {
@@ -97,7 +95,7 @@ class SystemControl:
     @looper(NO_DELAY)
     def _receive_control_socket(self) -> None:
         try:
-            data = _control_service_recv(2048)
+            data, anc_data, *_ = _control_service_recv(2048, 1024)
         except OSError as ose:
             Log.error(ose)  # log this eventually
 
@@ -108,11 +106,7 @@ class SystemControl:
             except:
                 return
 
-            control_auth = data.get('auth', (0, 0, b''))
-            if (not control_auth):
-                return
-
-            authorized = authenticate_sender([(SOL_SOCKET, SCM_CREDENTIALS, scm_creds_pack(*control_auth))])
+            authorized = authenticate_sender(anc_data)
             # dropping message due to failed auth
             if (not authorized):
                 return

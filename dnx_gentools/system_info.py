@@ -343,7 +343,7 @@ class System:
                             rule_d['--to-dest'] = value.split(':')[0]
                         except IndexError:
                             rule_d['--to-dest'] = value
-                            rule_d['--to-port'] = rule_d['--dport']
+                            rule_d['--to-port'] = rule_d.get('--dport', '')
 
             nat_rules.append((i, rule_d))
 

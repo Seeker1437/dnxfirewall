@@ -101,7 +101,7 @@ ZONE_TO_INT = {'lan': 11, 'dmz': 12}
 def validate_management_access(fields: config) -> Optional[ValidationError]:
 
     if (fields.name not in ['lan', 'dmz'] or fields.service not in SERVICE_TO_PORT):
-        raise ValidationError(INVALID_FORM)
+        return ValidationError(INVALID_FORM)
 
     # convert_int will return -1 if issues with form data and ValueError will cover invalid CFG action key/vals
     try:

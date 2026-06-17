@@ -11,10 +11,10 @@ web_module_import_callout(__file__)
 from dnx_gentools.def_constants import TYPE_CHECKING
 from dnx_gentools.def_enums import CFG, DATA, DHCP
 from dnx_gentools.def_namedtuples import DHCP_RECORD
-from dnx_gentools.file_operations import ConfigurationManager, config, load_configuration, load_data
+from dnx_gentools.file_operations import ConfigurationManager, config, load_configuration, load_data, write_data
 from dnx_gentools.system_info import System
 
-from dnx_iptools.cprotocol_tools import itoip
+from dnx_iptools.cprotocol_tools import iptoi, itoip
 from dnx_iptools.protocol_tools import mac_add_sep as mac_str
 
 from source.web_validate import *
@@ -183,7 +183,7 @@ class WebPage(StandardWebPage):
             configure_reservation(dhcp_settings, CFG.DEL)
 
         elif ('dhcp_lease_remove' in form):
-            ip_addr = form.get('dhcp_lease_remove', DATA)
+            ip_addr = form.get('dhcp_lease_remove', DATA.MISSING)
             if (ip_addr is DATA.MISSING):
                 return 8, INVALID_FORM
 
@@ -288,14 +288,15 @@ def configure_reservation(dhcp: config, action: CFG) -> Optional[ValidationError
 
         dnx.write_configuration(dhcp_server_settings.expanded_user_data)
 
-# FIXME: this is referencing the wrong file. i should be dhcp_server.leases
 def remove_dhcp_lease(ip_addr: str) -> Optional[ValidationError]:
-    with ConfigurationManager('dhcp_server', cfg_type='global') as dnx:
-        dhcp_leases: ConfigChain = dnx.load_configuration(strict=False)
+    try:
+        dhcp_leases = load_data('dhcp_server.lease', filepath='dnx_profile/data/usr')
+    except FileNotFoundError:
+        return ValidationError(INVALID_FORM)
 
-        try:
-            del dhcp_leases[f'leases->{ip_addr}']
-        except KeyError:
-            return ValidationError(INVALID_FORM)
+    try:
+        del dhcp_leases[str(iptoi(ip_addr))]
+    except KeyError:
+        return ValidationError(INVALID_FORM)
 
-        dnx.write_configuration(dhcp_leases.expanded_user_data)
+    write_data(dhcp_leases, 'dhcp_server.lease', filepath='dnx_profile/data/usr')

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import traceback
 from datetime import timedelta
+from secrets import compare_digest, token_urlsafe
 
 from source.web_typing import web_module_import_callout, web_module_import_checkpoint
 
@@ -56,6 +57,8 @@ app.permanent_session_lifetime = timedelta(minutes=app_config['flask->session_ti
 
 app.jinja_env.trim_blocks   = True
 app.jinja_env.lstrip_blocks = True
+
+CSRF_FIELD = 'csrf_token'
 
 web_module_import_checkpoint(__file__, 'Flask API initialized.')
 
@@ -797,6 +800,18 @@ def ajax_response(*, status: bool, data: Union[dict, list]):
 
     return jsonify({'success': status, 'result': data})
 
+def get_csrf_token() -> str:
+    token = session.get(CSRF_FIELD)
+    if (not token):
+        token = token_urlsafe(32)
+        session[CSRF_FIELD] = token
+
+    return token
+
+@app.context_processor
+def csrf_context() -> dict:
+    return {'csrf_token': get_csrf_token}
+
 # =================================
 # FLASK API - REQUEST MODS
 # =================================
@@ -839,6 +854,19 @@ def load_user_settings() -> None:
         web_config: ConfigChain = load_configuration('logins', filepath='/dnx_webui/data', strict=False)
 
         context_global.settings = web_config.get_dict(f'users->{user}->settings')
+
+@app.before_request
+def validate_csrf_token():
+    if (request.method != 'POST'):
+        return
+
+    expected_token = session.get(CSRF_FIELD)
+    provided_token = request.form.get(CSRF_FIELD) or request.headers.get('X-CSRF-Token')
+
+    if (not expected_token or not provided_token or not compare_digest(expected_token, provided_token)):
+        return render_template(
+            general_error_page, theme=context_global.theme, general_error='Invalid request token.'
+        )
 
 
 # =================================

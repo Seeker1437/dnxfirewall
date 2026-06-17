@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from json import dumps
 from threading import Timer
-from socket import socket, AF_INET, SOCK_DGRAM, SOCK_CLOEXEC
+from socket import socket, AF_UNIX, SOCK_DGRAM, SOCK_CLOEXEC
 
 from dnx_gentools.def_exceptions import ControlError
-from dnx_gentools.def_constants import TYPE_CHECKING, CONTROL_SOCKET, CONTROL_AUTHENTICATION, NO_DELAY
+from dnx_gentools.def_constants import TYPE_CHECKING, CONTROL_SOCKET, NO_DELAY
 from dnx_gentools.def_enums import LOG
 
 from dnx_routines.logging.log_client import Log, direct_log
@@ -21,19 +21,12 @@ __all__ = (
 )
 
 # ==================
-# CONTROL SOCKET
-# ===================
-_control_client: Socket_T = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC)
-# connect on udp is for convenience on socket send
-_control_client.connect(CONTROL_SOCKET)
-
-_control_client_send = _control_client.send
-
-# ==================
 # CONTROL UTILITY
 # ===================
 def _system_action(control_data: Bytes) -> None:
-    _control_client_send(control_data)
+    with socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC) as control_client:
+        control_client.connect(CONTROL_SOCKET)
+        control_client.send(control_data)
 
 def system_action(*, delay: int = NO_DELAY, **kwargs) -> None:
     '''
@@ -49,8 +42,6 @@ def system_action(*, delay: int = NO_DELAY, **kwargs) -> None:
     '''
     if not isinstance(delay, int):
         return
-
-    kwargs['auth'] = CONTROL_AUTHENTICATION
 
     try:
         control_data = dumps(kwargs).encode('utf-8')

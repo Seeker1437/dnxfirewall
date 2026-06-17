@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 
 from typing import NamedTuple as _NamedTuple
 
@@ -83,7 +84,13 @@ class WebPage(LogWebPage):
         return NO_STANDARD_ERROR
 
 def get_log_entries(file_path: str) -> list[FIREWALL_LOG]:
-    log_files = reversed(sorted(os.listdir(file_path))[:-1])
+    if (not os.path.isdir(file_path)):
+        return []
+
+    log_files = [
+        file for file in reversed(sorted(os.listdir(file_path)))
+        if file.endswith('.log') and os.path.isfile(f'{file_path}/{file}')
+    ]
 
     combined_raw = []
     for file in log_files:
@@ -96,6 +103,40 @@ def get_log_entries(file_path: str) -> list[FIREWALL_LOG]:
     combined_formatted = []
     combinedf_append = combined_formatted.append
     for entry in combined_raw[:100]:
-        combinedf_append(FIREWALL_LOG(*[sub_entry.replace('"', '').split('=')[1] for sub_entry in entry.split()]))
+        if parsed_entry := parse_log_entry(entry):
+            combinedf_append(parsed_entry)
 
     return combined_formatted
+
+def parse_log_entry(entry: str) -> Optional[FIREWALL_LOG]:
+    entry = entry.strip()
+    if (not entry or entry.startswith('#')):
+        return None
+
+    try:
+        log_data = dict(field.split('=', 1) for field in shlex.split(entry))
+    except ValueError:
+        return None
+
+    try:
+        return FIREWALL_LOG(
+            log_data['timestamp'],
+            log_data['log_type'],
+            log_data['log_component'],
+            log_data.get('rule', log_data.get('fw_rule_name')),
+            log_data['action'],
+            log_data['conn_direction'],
+            log_data['protocol'],
+            log_data['in_intf'],
+            log_data['src_zone'],
+            log_data['src_country'],
+            log_data['src_ip'],
+            log_data['src_port'],
+            log_data['out_intf'],
+            log_data['dst_zone'],
+            log_data['dst_country'],
+            log_data['dst_ip'],
+            log_data['dst_port']
+        )
+    except KeyError:
+        return None

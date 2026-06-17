@@ -146,9 +146,8 @@ DNX_AUTHENTICATION: bytes = _scm_creds_pack(_os.getpid(), _pwd.getpwnam(USER).pw
 
 # SYSLOG_TLS_PORT = 6514
 # SYSLOG_SOCKET   = 6970
-CONTROL_SOCKET: tuple[str, int] = ('127.0.0.1', 6969)
+CONTROL_SOCKET:  str = f'{HOME_DIR}/dnx_profile/control.sock'
 # DATABASE_SOCKET: tuple[str, int] = ('127.0.0.1', 6970)
-# CONTROL_SOCKET:  str = f'{HOME_DIR}/dnx_profile/control.sock'
 DATABASE_SOCKET: str = f'{HOME_DIR}/dnx_routines/database/ddb.sock'
 
 # ================================
