@@ -147,6 +147,10 @@ def validate_pbl_remove(host: str, /) -> Optional[ValidationError]:
     if error := check_digit(timestamp):
         return ValidationError('Invalid timestamp format.')
 
+def _expand_pbl_host_info(cfg) -> None:
+    host, profile_idx, timestamp = cfg.host_info.split('/')
+    cfg.update({'host': iptoi(host), 'profile_idx': int(profile_idx), 'timestamp': int(timestamp)})
+
 # =========================
 # FORM VALIDATION TEMPLATE
 # =========================
@@ -200,10 +204,8 @@ form_validator = ValidationConfigForm({
     },
     'ips_pbl_remove': {
         'ips_pbl_remove': ValidationFieldInfo(cfg_key='host_info', validation=validate_pbl_remove),
-        # idea:: see if there is a better "lazy" way to do this without needed to make a function.
         # note: converting post validation to separate the fields compressed into a single int.
-        '_on_exit': ValidationFieldContext(
-            call=lambda cfg: exec("h = cfg.host_info.split('/'), cfg.update({'host': iptoi(h[0]), 'profile_idx': int(h[1]), 'timestamp': int(h[2])})"))
+        '_on_exit': ValidationFieldContext(call=_expand_pbl_host_info)
     }
 })
 

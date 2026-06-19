@@ -244,6 +244,12 @@ class NatAndWebUiRegressionTests(unittest.TestCase):
         self.assertIn('validate_csrf_token', main)
         self.assertIn('X-CSRF-Token', ajax)
 
+    def test_nat_remove_guards_missing_position(self):
+        # fields.position was read before validation, so a remove post without it 500s.
+        src = (REPO_ROOT / 'dnx_webui/source/rules/dfe_nat.py').read_text()
+
+        self.assertIn("hasattr(fields, 'position')", src)
+
 
 if __name__ == '__main__':
     unittest.main()

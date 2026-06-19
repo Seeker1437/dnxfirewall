@@ -143,6 +143,19 @@ class TrafficLogWebUiRegressionTests(unittest.TestCase):
 
         self.assertEqual(entries, [('time-101', 'system', 'error', 'valid row')])
 
+    def test_log_parser_keeps_rows_missing_optional_fields(self):
+        traffic = load_module('source.system.log.dfe_traffic', 'dnx_webui/source/system/log/dfe_traffic.py')
+
+        # a line missing dst_port should still render (as '-'), not be dropped entirely.
+        entry = traffic.parse_log_entry(
+            'timestamp="1.2" log_type="firewall" log_component="rule" rule="r" action="accept" '
+            'conn_direction="outbound" protocol="17" in_intf="1" src_zone="lan" src_country="0" '
+            'src_ip="192.0.2.10" src_port="12345" out_intf="2" dst_zone="wan" dst_country="0" dst_ip="198.51.100.10"'
+        )
+
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.dst_port, '-')
+
 
 if __name__ == '__main__':
     unittest.main()

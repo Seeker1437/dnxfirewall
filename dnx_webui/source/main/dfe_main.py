@@ -600,9 +600,7 @@ def main():
     return send_to_login_page()
 
 def _request_theme() -> dict:
-    # set_theme_values (before_request) normally populates context_global.theme, but error renders can
-    # fire before it runs: validate_csrf_token short-circuits POSTs, and routing 404s skip before_request
-    # entirely. fall back to a complete default theme so the error page renders instead of 500ing.
+    # error paths can render before set_theme_values runs (csrf reject, 404), so fall back to a default.
     return getattr(context_global, 'theme', None) or build_theme('light')
 
 @app.errorhandler(404)

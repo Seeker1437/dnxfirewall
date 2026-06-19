@@ -40,6 +40,12 @@ class FakeChain(dict):
         return []
 
 
+class ConfigAttr(dict):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.__dict__.update(kwargs)
+
+
 def install_intrusion_stubs(passively_blocked):
     sys.path.insert(0, str(REPO_ROOT / 'dnx_webui'))
     sys.path.insert(0, str(REPO_ROOT))
@@ -121,6 +127,39 @@ class IntrusionWebUiRegressionTests(unittest.TestCase):
         entries = result['passively_blocked_hosts']
         self.assertEqual(len(entries[0]), 3)
         self.assertEqual(entries[0], (167772171, '1', 1700000000))
+
+    def test_dns_profile_ident_writes_to_dns_config(self):
+        # the dns-domain module wrote profile name/desc into the ip-proxy config (copy/paste).
+        src = (REPO_ROOT / 'dnx_webui/source/intrusion/domain/dfe_domain.py').read_text()
+        block = src.split('def configure_security_profile_ident', 1)[1].split('\ndef ', 1)[0]
+
+        self.assertIn("cfg_type='security/dns'", block)
+        self.assertNotIn("cfg_type='security/ip'", block)
+
+    def test_geo_view_direction_validation_uses_keyword_range(self):
+        # partial(check_in_range, (0, 6)) binds the range as the value -> TypeError on submit.
+        src = (REPO_ROOT / 'dnx_webui/source/intrusion/dfe_ip.py').read_text()
+
+        self.assertNotIn('partial(check_in_range, (0, 6))', src)
+        self.assertIn('partial(check_in_range, r=(0, 6))', src)
+
+    def test_passive_block_remove_targets_pbl_handler(self):
+        # the remove button posted ips_wl_remove (whitelist), so blocks could never be cleared.
+        template = (REPO_ROOT / 'dnx_webui/templates/intrusion/ids_ips.html').read_text()
+        self.assertIn('ips_pbl_remove', template)
+
+        src = (REPO_ROOT / 'dnx_webui/source/intrusion/dfe_ids_ips.py').read_text()
+        self.assertNotIn('exec(', src)
+
+    def test_pbl_host_info_expands_to_fields(self):
+        install_intrusion_stubs([])
+        ids_ips = load_module('source.intrusion.dfe_ids_ips', 'dnx_webui/source/intrusion/dfe_ids_ips.py')
+
+        cfg = ConfigAttr(host_info='192.0.2.1/3/1700000000')
+        ids_ips._expand_pbl_host_info(cfg)
+
+        self.assertEqual(cfg['profile_idx'], 3)
+        self.assertEqual(cfg['timestamp'], 1700000000)
 
 
 if __name__ == '__main__':

@@ -129,6 +129,15 @@ class DhcpWebUiRegressionTests(unittest.TestCase):
         self.assertEqual(error.message, 'Invalid form.')
         self.assertEqual(writes, [])
 
+    def test_reservation_add_uses_correct_lease_and_mac_checks(self):
+        src = (REPO_ROOT / 'dnx_webui/source/system/settings/dfe_dhcp.py').read_text()
+        block = src.split('def configure_reservation', 1)[1].split('\ndef ', 1)[0]
+
+        self.assertNotIn("cfg_type='system/global'", block)
+        self.assertIn("filepath='dnx_profile/data/usr'", block)
+        self.assertIn("get_list('reservations')", block)
+        self.assertIn('str(iptoi(dhcp.ip))', block)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -255,8 +255,8 @@ form_validator = ValidationConfigForm({
             cfg_key='desc', validation=partial(alpha_maxlen, maxlen=32, override=[' '])),
     },
     'change_geo_view': {
-        'menu_dir': ValidationFieldInfo(cfg_key='name', format=partial(check_in_range, (0, 6))),
-        'region': ValidationFieldInfo(cfg_key='name', validation=validate_geo_view_region)
+        'menu_dir': ValidationFieldInfo(cfg_key='menu_dir', format=partial(check_in_range, r=(0, 6))),
+        'region': ValidationFieldInfo(cfg_key='region', validation=validate_geo_view_region)
     }
 })
 

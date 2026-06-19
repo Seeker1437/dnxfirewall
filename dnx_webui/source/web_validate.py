@@ -293,7 +293,7 @@ def convert_bint(num: Union[str, bool]) -> Union[int, DATA]:
     '''
     try:
         bint = int(num)
-    except TypeError:
+    except (TypeError, ValueError):
         return DATA.INVALID
 
     return bint if bint in BINT else DATA.INVALID

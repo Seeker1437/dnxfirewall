@@ -169,7 +169,7 @@
                   <td>
                     {% set val = host|itoip + '/' + profile + '/' + timestamp %}
                     {{ create_button_with_modal('btn-floating btn-small red',
-                        'remove', 2, loop.index, 3, 'ips_wl_remove', val, message)|safe }}
+                        'remove', 2, loop.index, 3, 'ips_pbl_remove', val, message)|safe }}
                   <td>{{ profile }}</td>
                   <td>{{ host|itoip }}</td>
                   <td>{{ timestamp|ts_offset_format }}</td>

@@ -88,6 +88,9 @@ def _dnat_rules(form: Form, action: str) -> str:
                 configure_open_wan_protocol(fields, action=CFG.ADD)
 
     elif (action == 'remove'):
+        if not hasattr(fields, 'position'):
+            return INVALID_FORM + ' code=97'
+
         fields.position = convert_int(fields.position)
 
         if error := validate_dnat_rule(fields, action=CFG.DEL):
@@ -123,6 +126,9 @@ def _snat_rules(form: Form, action: str) -> str:
             iptables.add_nat(fields)
 
     elif (action == 'remove'):
+        if not hasattr(fields, 'position'):
+            return INVALID_FORM + ' code=97'
+
         fields.position = convert_int(fields.position)
 
         # NOTE: validation needs to know the zone, so it can ensure the position is valid

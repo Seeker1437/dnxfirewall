@@ -84,7 +84,7 @@ def validate_adm_distance(adm_distance: str) -> Optional[ValidationError]:
     if (adm_distance not in ['10', '20', '60', '100']):
         return ValidationError('Invalid administrative distance.')
 
-err_as_value(ValidationError)
+@err_as_value(ValidationError)
 def validate_route_del(route: str) -> Optional[ValidationError]:
     try:
         intf, net_id, net_mask, gateway, adm_distance = route.split(', ')

@@ -120,23 +120,23 @@ def parse_log_entry(entry: str) -> Optional[FIREWALL_LOG]:
 
     try:
         return FIREWALL_LOG(
-            log_data['timestamp'],
-            log_data['log_type'],
-            log_data['log_component'],
-            log_data.get('rule', log_data.get('fw_rule_name')),
-            log_data['action'],
-            log_data['conn_direction'],
-            log_data['protocol'],
-            log_data['in_intf'],
-            log_data['src_zone'],
-            log_data['src_country'],
-            log_data['src_ip'],
-            log_data['src_port'],
-            log_data['out_intf'],
-            log_data['dst_zone'],
-            log_data['dst_country'],
-            log_data['dst_ip'],
-            log_data['dst_port']
+            log_data.get('timestamp', '-'),
+            log_data.get('log_type', '-'),
+            log_data.get('log_component', '-'),
+            log_data.get('rule', log_data.get('fw_rule_name', '-')),
+            log_data.get('action', '-'),
+            log_data.get('conn_direction', '-'),
+            log_data.get('protocol', '-'),
+            log_data.get('in_intf', '-'),
+            log_data.get('src_zone', '-'),
+            log_data.get('src_country', '-'),
+            log_data.get('src_ip', '-'),
+            log_data.get('src_port', '-'),
+            log_data.get('out_intf', '-'),
+            log_data.get('dst_zone', '-'),
+            log_data.get('dst_country', '-'),
+            log_data.get('dst_ip', '-'),
+            log_data.get('dst_port', '-')
         )
     except KeyError:
         return None

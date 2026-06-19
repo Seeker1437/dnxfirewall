@@ -55,6 +55,19 @@ class CoreWebUiRegressionTests(unittest.TestCase):
         self.assertIn('theme=_request_theme()', main)
         self.assertIn('from source.main.dfe_themes import build_theme', main)
 
+    def test_convert_bint_handles_non_numeric_values(self):
+        # int('abc') raises ValueError, not TypeError, so a tampered bool field must not 500.
+        src = (REPO_ROOT / 'dnx_webui/source/web_validate.py').read_text()
+        block = src.split('def convert_bint', 1)[1].split('\ndef ', 1)[0]
+
+        self.assertIn('except (TypeError, ValueError):', block)
+
+    def test_route_delete_validation_returns_errors_by_value(self):
+        # err_as_value must decorate validate_route_del, else raised ValidationErrors escape as 500s.
+        src = (REPO_ROOT / 'dnx_webui/source/system/dfe_routing.py').read_text()
+
+        self.assertIn('@err_as_value(ValidationError)\ndef validate_route_del', src)
+
 
 if __name__ == '__main__':
     unittest.main()
