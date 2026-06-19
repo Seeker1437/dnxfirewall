@@ -5,7 +5,7 @@ from __future__ import annotations
 # ================
 # RUNTIME IMPORTS
 # ================
-from dnx_gentools.def_constants import INITIALIZE_MODULE, DATABASE_SOCKET
+from dnx_gentools.def_constants import INITIALIZE_MODULE, DATABASE_SOCKET, ONE_SEC, fast_sleep
 
 if INITIALIZE_MODULE('database'):
     __all__ = ('run',)
@@ -48,14 +48,17 @@ def run():
     if INITIALIZE_MODULE('db-tables'):
         return
 
-    threading.Thread(target=ddb_main.receive_requests).start()
-    try:
-        ddb_main.run()
-    except (KeyboardInterrupt, TerminateSignal):
-        raise
+    # workers run as daemons; SIGTERM only raises on the main thread, so it can't be parked on them.
+    receiver = threading.Thread(target=ddb_main.receive_requests, daemon=True)
+    writer = threading.Thread(target=ddb_main.run, daemon=True)
+    receiver.start()
+    writer.start()
 
-    except Exception as e:
-        Log.error(f'Error in ddb_main.run: {e}')
+    try:
+        # interruptible wait so SIGTERM can raise here; exit (systemd restarts) if a worker dies.
+        while receiver.is_alive() and writer.is_alive():
+            fast_sleep(ONE_SEC)
+    except (KeyboardInterrupt, TerminateSignal):
         raise
 
     finally:

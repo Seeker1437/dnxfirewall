@@ -8,6 +8,7 @@ StartLimitIntervalSec=3
 Type=simple
 Restart=always
 RestartSec=69ms
+TimeoutStopSec=5s
 User=dnx
 ExecStart=/usr/bin/python3 /home/dnx/dnxfirewall/dnx_run.py cli database
 Environment=HOME_DIR=/home/dnx/dnxfirewall
