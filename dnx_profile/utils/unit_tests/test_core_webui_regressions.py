@@ -68,6 +68,28 @@ class CoreWebUiRegressionTests(unittest.TestCase):
 
         self.assertIn('@err_as_value(ValidationError)\ndef validate_route_del', src)
 
+    def test_active_tab_menu_interpolate_the_value(self):
+        # value was a literal '" + n + "' inside a single-quoted string, never interpolated.
+        layout = (REPO_ROOT / 'dnx_webui/templates/layout.html').read_text()
+
+        self.assertNotIn('value=" + n + ">', layout)
+        self.assertIn("""value="' + n + '">""", layout)
+
+    def test_login_timing_loop_checks_event_state(self):
+        # `while not self._time_expired` tests the Event object (always truthy); must call is_set().
+        src = (REPO_ROOT / 'dnx_webui/source/main/dfe_authentication.py').read_text()
+
+        self.assertNotIn('while not self._time_expired:', src)
+        self.assertIn('while not self._time_expired.is_set():', src)
+
+    def test_filter_table_bounds_and_striping(self):
+        # f <= n2 reads tdList[n2] (out of bounds); colorizeRow(r, tr) stripes the wrong row.
+        js = (REPO_ROOT / 'dnx_webui/static/assets/js/dnx_table.js').read_text()
+
+        self.assertNotIn('f <= n2', js)
+        self.assertIn('f < n2', js)
+        self.assertNotIn('colorizeRow(r, tr)', js)
+
 
 if __name__ == '__main__':
     unittest.main()

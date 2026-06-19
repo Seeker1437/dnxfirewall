@@ -89,11 +89,11 @@
     <script>
         function activeTab(n) {
             history.replaceState(null, null, window.location.pathname+"?tab="+n);
-            document.getElementById('timeout-tab').innerHTML = '<input type=hidden name=tab value=" + n + ">';
+            document.getElementById('timeout-tab').innerHTML = '<input type=hidden name=tab value="' + n + '">';
         }
 
         function activeMenu(n) {
-            document.getElementById('timeout-menu').innerHTML = '<input type=hidden name=menu value=" + n + ">';
+            document.getElementById('timeout-menu').innerHTML = '<input type=hidden name=menu value="' + n + '">';
         }
     </script>
   {% endif %}

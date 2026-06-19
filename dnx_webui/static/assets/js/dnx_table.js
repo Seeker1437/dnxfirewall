@@ -33,15 +33,16 @@ function filterTable(n1, n2, id='') {
 
         if (tdList.length < n2) { continue; }
 
-        for (let f = n1; f <= n2; f++) {
-            let field = tdList[f].textContent;
-            if (field.indexOf(input.value) > -1) {
-                if (colorize) { colorizeRow(r, tr); } r++;
-                tr[i].style.display = ""; break;
+        let matched = false;
+        for (let f = n1; f < n2; f++) {
+            if (tdList[f].textContent.indexOf(input.value) > -1) { matched = true; break; }
+        }
 
-            } else {
-                tr[i].style.display = "none";
-            }
+        tr[i].style.display = matched ? "" : "none";
+
+        if (matched) {
+            if (colorize) { tr[i].className = (r % 2 === 0) ? "tr-even" : "tr-odd"; }
+            r++;
         }
     }
 }

@@ -59,7 +59,7 @@ class Authentication:
             direct_log(LOG_NAME, LOG.WARNING, f'Failed login attempt for user {username} from {request.remote_addr}.')
 
         # blocks until the expiration flag is set
-        while not self._time_expired:
+        while not self._time_expired.is_set():
             fast_sleep(.202)
 
         if (authorized):
