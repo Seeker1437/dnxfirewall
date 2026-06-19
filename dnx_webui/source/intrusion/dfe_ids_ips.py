@@ -58,11 +58,8 @@ class WebPage(StandardWebPage):
         ddos_notify = False if ddos['enabled'] or nats_configured else True
         ps_notify   = False if portscan['enabled'] or nats_configured else True
 
-        # converting standard timestamp to a frontend-readable string format
-        passively_blocked_hosts = []
-        for blocked_host in System.ips_passively_blocked():
-
-            passively_blocked_hosts.append((*blocked_host, System.offset_and_format(blocked_host[2])))
+        # (host, profile, timestamp) tuples; the template formats the timestamp itself via ts_offset_format.
+        passively_blocked_hosts = list(System.ips_passively_blocked())
 
         return {
             'security_profile': sec_profile,

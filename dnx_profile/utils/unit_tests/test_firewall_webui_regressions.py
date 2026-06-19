@@ -167,6 +167,14 @@ class FirewallWebUiRegressionTests(unittest.TestCase):
         self.assertNotIn('old_name', manager.user_database['ntoid'])
         self.assertEqual(manager.user_database['ntoid']['new_name'], 10001)
 
+    def test_rule_object_lookup_tolerates_missing_objects(self):
+        # a rule referencing a deleted object resolves to name 'none', which is absent from
+        # fw_object_map; bare indexing raises KeyError and 500s the entire rules page.
+        template = (REPO_ROOT / 'dnx_webui/templates/rules/firewall/firewall.html').read_text()
+
+        self.assertNotIn('fw_object_map[subfield[1]]', template)
+        self.assertIn('fw_object_map.get(subfield[1])', template)
+
 
 if __name__ == '__main__':
     unittest.main()

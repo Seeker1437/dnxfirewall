@@ -374,7 +374,10 @@ class ConfigChain:
 
     def __delitem__(self, key: str) -> None:
 
-        key_matches = [k for k in self.__mutable_config if k.startswith(key)]
+        # match the exact key and its subtree (children under "key->") only. a bare startswith(key)
+        # also matches prefix-siblings (e.g. deleting "...->80" would remove "...->800"/"...->8080").
+        child_prefix = f'{key}{self._sep}'
+        key_matches = [k for k in self.__mutable_config if k == key or k.startswith(child_prefix)]
         for k in key_matches:
             del self.__mutable_config[k]
 

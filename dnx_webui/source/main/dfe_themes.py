@@ -38,15 +38,18 @@ theme_light = {
     'title': 'blue-grey-text text-darken-1'
 }
 
-@app.before_request
-def set_theme_values() -> None:
-    style = context_global.settings['theme']
-
-    context_global.theme = {'mode': style}
-    context_global.theme.update(theme_common)
+def build_theme(style: str) -> dict:
+    theme = {'mode': style}
+    theme.update(theme_common)
 
     if (style == 'dark'):
-        context_global.theme.update(theme_dark)
+        theme.update(theme_dark)
 
     elif (style == 'light'):
-        context_global.theme.update(theme_light)
+        theme.update(theme_light)
+
+    return theme
+
+@app.before_request
+def set_theme_values() -> None:
+    context_global.theme = build_theme(context_global.settings['theme'])

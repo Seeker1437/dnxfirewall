@@ -599,10 +599,16 @@ def refresh_session(session_info: dict):
 def main():
     return send_to_login_page()
 
+def _request_theme() -> dict:
+    # set_theme_values (before_request) normally populates context_global.theme, but error renders can
+    # fire before it runs: validate_csrf_token short-circuits POSTs, and routing 404s skip before_request
+    # entirely. fall back to a complete default theme so the error page renders instead of 500ing.
+    return getattr(context_global, 'theme', None) or build_theme('light')
+
 @app.errorhandler(404)
 def page_not_found(error):
 
-    return render_template(general_error_page, theme=context_global.theme, general_error='page not found.')
+    return render_template(general_error_page, theme=_request_theme(), general_error='page not found.')
 
 @app.errorhandler(500)
 def internal_server_error(error):
@@ -617,10 +623,10 @@ def internal_server_error(error):
             '=' * 32, tb[-1], '=' * 32
         ])
 
-        return render_template('main/dev_error.html', theme=context_global.theme, general_error=error)
+        return render_template('main/dev_error.html', theme=_request_theme(), general_error=error)
     # --------------------------------------------- #
 
-    return render_template(general_error_page, theme=context_global.theme, general_error=error)
+    return render_template(general_error_page, theme=_request_theme(), general_error=error)
 
 # --------------------------------------------- #
 # all standard page loads use this logic to decide the page action/ call the correct
@@ -865,7 +871,7 @@ def validate_csrf_token():
 
     if (not expected_token or not provided_token or not compare_digest(expected_token, provided_token)):
         return render_template(
-            general_error_page, theme=context_global.theme, general_error='Invalid request token.'
+            general_error_page, theme=_request_theme(), general_error='Invalid request token.'
         )
 
 
@@ -877,6 +883,7 @@ import source.main.dfe_template_globals
 
 # webui themes
 import source.main.dfe_themes
+from source.main.dfe_themes import build_theme
 
 # LABEL: DEVELOPMENT_ONLY_CODE
 # webui development helpers

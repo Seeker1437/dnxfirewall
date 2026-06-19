@@ -105,32 +105,32 @@
                   <td class="rname">{{ rule[2] }}</td>
                   <td class="rsrc_zone">
                     {% for subfield in rule[3] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="rsrc_network">
                     {% for subfield in rule[4] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="rsrc_service">
                     {% for subfield in rule[5] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="rdst_zone">
                     {% for subfield in rule[6] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="rdst_network">
                     {% for subfield in rule[7] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="rdst_service">
                     {% for subfield in rule[8] %}
-                      {{ firewall_settings.fw_object_map[subfield[1]][0]|safe }}
+                      {{ (firewall_settings.fw_object_map.get(subfield[1]) or ['object missing'])[0]|safe }}
                     {% endfor %}
                   </td>
                   <td class="raction">{{'accept' if rule[9] else 'drop'}}</td>

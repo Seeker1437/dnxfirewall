@@ -70,7 +70,7 @@ class WebPage(StandardWebPage):
             if (DATA.MISSING in account_info.values()):
                 return 3, INVALID_FORM
 
-            if (username == session['user']):
+            if (account_info.username == session['user']):
                 return 4, 'Cannot delete the account you are currently logged in with.'
 
             else:
